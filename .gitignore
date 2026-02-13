@@ -1,0 +1,39 @@
+# Создай/перезапиши .gitignore с правильным содержимым
+cat > .gitignore << EOF
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyd
+*.pyo
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.env
+.venv
+Pipfile.lock
+poetry.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
+# Logs
+*.log
+*.log.*
+
+# OS
+.DS_Store
+Thumbs.db
+EOF
