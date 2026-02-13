@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUNTER · Гараж</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Шапка с балансом -->
+        <header class="header">
+            <div class="balance">
+                <span class="balance-cash">💰 <span id="cashBalance">0</span>$</span>
+                <span class="balance-token">🎮 <span id="tokenBalance">0</span> GTR</span>
+            </div>
+            <div class="garage-level">
+                <span class="garage-badge">🏢 УРОВЕНЬ <span id="garageLevel">1</span></span>
+            </div>
+        </header>
+
+        <!-- Основная информация о машине -->
+        <div class="car-card">
+            <div class="car-header">
+                <h2 id="carName">Веста пацана</h2>
+                <span class="car-condition" id="carCondition">100%</span>
+            </div>
+            
+            <!-- Спидометр -->
+            <div class="speedometer">
+                <div class="speed-gauge">
+                    <div class="needle" id="speedNeedle"></div>
+                </div>
+                <div class="speed-value">
+                    <span id="topSpeed">180</span> <small>км/ч</small>
+                </div>
+            </div>
+
+            <!-- Характеристики -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">⚡ Мощность</span>
+                    <span class="stat-value" id="powerValue">100</span>
+                    <span class="stat-unit">л.с.</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">💨 Разгон</span>
+                    <span class="stat-value" id="accelerationValue">8.5</span>
+                    <span class="stat-unit">сек</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🎚 Управление</span>
+                    <span class="stat-value" id="handlingValue">5.0</span>
+                    <span class="stat-unit"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладки: Тюнинг, Двигатель, Ходовая, Музыка -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="engine">🔧 ДВС</button>
+            <button class="tab-btn" data-tab="suspension">🔩 ХОДОВАЯ</button>
+            <button class="tab-btn" data-tab="audio">🔊 МУЗЫКА</button>
+            <button class="tab-btn" data-tab="tune">⚙️ НАСТРОЙКА</button>
+        </div>
+
+        <!-- Контент вкладок -->
+        <div class="tab-content">
+            <!-- ВКЛАДКА ДВИГАТЕЛЬ И ТУРБИНА -->
+            <div id="tab-engine" class="tab-pane active">
+                <div class="parts-grid">
+                    <div class="part-card">
+                        <div class="part-icon">🛢️</div>
+                        <div class="part-info">
+                            <h3>Двигатель</h3>
+                            <p>Уровень <span id="engineLevel">1</span></p>
+                            <p class="part-desc">Мощность: x<span id="engineMultiplier">1.0</span></p>
+                        </div>
+                        <div class="part-actions">
+                            <select id="engineSelect" class="part-select">
+                                <option value="1">Ур.1 (2000$)</option>
+                                <option value="2">Ур.2 (5000$)</option>
+                                <option value="3">Ур.3 (10000$)</option>
+                            </select>
+                            <button onclick="upgradeEngine()" class="btn-upgrade">Купить</button>
+                        </div>
+                    </div>
+
+                    <div class="part-card">
+                        <div class="part-icon">💨</div>
+                        <div class="part-info">
+                            <h3>Турбина</h3>
+                            <p>Уровень <span id="turboLevel">0</span></p>
+                            <p class="part-desc">+<span id="turboBoost">0</span>% мощности</p>
+                        </div>
+                        <div class="part-actions">
+                            <select id="turboSelect" class="part-select">
+                                <option value="1">Ур.1 (+15%) - 2000$</option>
+                                <option value="2">Ур.2 (+30%) - 5000$</option>
+                                <option value="3">Ур.3 (+50%) - 10000$</option>
+                            </select>
+                            <button onclick="upgradeTurbo()" class="btn-upgrade">Купить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВКЛАДКА ПОДВЕСКА -->
+            <div id="tab-suspension" class="tab-pane">
+                <div class="parts-grid">
+                    <div class="part-card">
+                        <div class="part-icon">🔩</div>
+                        <div class="part-info">
+                            <h3>Подвеска</h3>
+                            <p>Уровень <span id="suspensionLevel">0</span></p>
+                            <p class="part-desc">Управляемость +<span id="handlingBonus">0</span>%</p>
+                        </div>
+                        <div class="part-actions">
+                            <select id="suspensionSelect" class="part-select">
+                                <option value="1">Ур.1 (+20%) - 1500$</option>
+                                <option value="2">Ур.2 (+40%) - 3500$</option>
+                                <option value="3">Ур.3 (+70%) - 7000$</option>
+                            </select>
+                            <button onclick="upgradeSuspension()" class="btn-upgrade">Купить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВКЛАДКА МУЗЫКА (САБВУФЕР) -->
+            <div id="tab-audio" class="tab-pane">
+                <div class="part-card audio-card">
+                    <div class="part-icon">🔊</div>
+                    <div class="part-info">
+                        <h3>Сабвуфер</h3>
+                        <p id="subwooferInfo">Не установлен</p>
+                    </div>
+                    <div class="audio-controls">
+                        <select id="subLevel" class="part-select">
+                            <option value="1">500Вт - 1000$</option>
+                            <option value="2">1000Вт - 3000$</option>
+                            <option value="3">1500Вт - 6000$</option>
+                        </select>
+                        <select id="subBrand" class="part-select">
+                            <option value="JBL">JBL</option>
+                            <option value="Sony">Sony</option>
+                            <option value="Mystery">Mystery</option>
+                            <option value="Kicx">Kicx</option>
+                        </select>
+                        <select id="musicGenre" class="part-select">
+                            <option value="Шансон">🔵 Шансон</option>
+                            <option value="Русский рэп">🎤 Русский рэп</option>
+                            <option value="Рок">🎸 Рок</option>
+                            <option value="Попса">💃 Попса</option>
+                        </select>
+                        <button onclick="upgradeSubwoofer()" class="btn-upgrade">Установить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВКЛАДКА НАСТРОЙКА (КЛАПАНА, ДВИГАТЕЛЬ) -->
+            <div id="tab-tune" class="tab-pane">
+                <div class="tune-section">
+                    <div class="tune-item">
+                        <div class="tune-info">
+                            <h4>🔧 Настройка клапанов</h4>
+                            <p id="valvesStatus">⏹️ Не настроены</p>
+                            <p class="tune-desc">Качество настройки: <span id="valvesQuality">0%</span></p>
+                            <p class="tune-price">💰 Цена: 500$</p>
+                        </div>
+                        <button onclick="tuneValves()" class="btn-tune">НАСТРОИТЬ</button>
+                    </div>
+                    
+                    <div class="tune-item">
+                        <div class="tune-info">
+                            <h4>⚙️ Настройка двигателя (Чип-тюнинг)</h4>
+                            <p id="engineTuneStatus">⏹️ Не настроен</p>
+                            <p class="tune-desc">Бонус: +<span id="engineTuneBonus">0</span>% к мощности</p>
+                            <p class="tune-price">💰 Цена: 1000$</p>
+                        </div>
+                        <button onclick="tuneEngine()" class="btn-tune">НАСТРОИТЬ</button>
+                    </div>
+                    
+                    <div class="tune-item">
+                        <div class="tune-info">
+                            <h4>🪛 Проводка</h4>
+                            <p id="wiringStatus">⚡ Базовая</p>
+                            <p class="tune-price">💰 Цена: 800$</p>
+                        </div>
+                        <button onclick="upgradeWiring()" class="btn-tune">УЛУЧШИТЬ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="action-buttons">
+            <button onclick="raceWithBot()" class="btn-race">🏁 ГОНКА С БОТОМ (+500$)</button>
+            <button onclick="window.location.href='/avito'" class="btn-market">🛒 АВИТО (Рынок)</button>
+        </div>
+
+        <!-- Уведомления -->
+        <div id="notification" class="notification hidden"></div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUNTER · Авито</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app">
+        <div class="avito-container">
+            <div class="avito-header">
+                <h1 class="avito-title">🛒 АВИТО РЫНОК</h1>
+                <button onclick="showSellForm()" class="btn-sell">+ Продать</button>
+            </div>
+            
+            <!-- Баланс -->
+            <div class="balance" style="margin-bottom: 20px; justify-content: center;">
+                <span class="balance-cash">💰 <span id="cashBalance">0</span>$</span>
+                <span class="balance-token">🎮 <span id="tokenBalance">0</span> GTR</span>
+            </div>
+            
+            <!-- Список объявлений -->
+            <div id="listingsContainer" class="listings">
+                <p class="text-dim">Загрузка объявлений...</p>
+            </div>
+            
+            <!-- Кнопка назад -->
+            <button onclick="window.location.href='/garage'" style="
+                width: 100%;
+                margin-top: 20px;
+                background: #2a2f34;
+                color: white;
+                border: none;
+                padding: 16px;
+                border-radius: 16px;
+                font-weight: 700;
+                cursor: pointer;
+            ">🔙 НАЗАД В ГАРАЖ</button>
+        </div>
+    </div>
+    
+    <!-- Модалка продажи -->
+    <div id="sellModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; padding: 20px;">
+        <div style="background: var(--bg-card); border-radius: 24px; padding: 24px;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;">Продать запчасть</h2>
+            
+            <select id="sellType" class="part-select" style="width: 100%; margin-bottom: 12px;">
+                <option value="engine">Двигатель</option>
+                <option value="turbo">Турбина</option>
+                <option value="suspension">Подвеска</option>
+                <option value="subwoofer">Сабвуфер</option>
+            </select>
+            
+            <input type="number" id="sellLevel" placeholder="Уровень (1-5)" class="part-select" style="width: 100%; margin-bottom: 12px;">
+            <input type="number" id="sellPrice" placeholder="Цена в $" class="part-select" style="width: 100%; margin-bottom: 12px;">
+            <textarea id="sellDesc" placeholder="Описание" class="part-select" style="width: 100%; margin-bottom: 12px; height: 80px;"></textarea>
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="createListing()" class="btn-upgrade" style="flex: 1;">Опубликовать</button>
+                <button onclick="hideSellForm()" class="btn-upgrade" style="flex: 1; background: #666;">Отмена</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        let tg_id = tg.initDataUnsafe?.user?.id;
+        
+        // Загрузка объявлений
+        async function loadListings() {
+            try {
+                const response = await fetch('/api/avito/listings');
+                const listings = await response.json();
+                
+                const container = document.getElementById('listingsContainer');
+                
+                if (listings.length === 0) {
+                    container.innerHTML = '<p class="text-dim" style="text-align: center;">Нет активных объявлений</p>';
+                    return;
+                }
+                
+                let html = '';
+                listings.forEach(listing => {
+                    let itemInfo = '';
+                    if (listing.item_type === 'engine') itemInfo = `⚡ Двигатель ${listing.item_data.level} ур.`;
+                    if (listing.item_type === 'turbo') itemInfo = `💨 Турбина ${listing.item_data.level} ур.`;
+                    if (listing.item_type === 'suspension') itemInfo = `🔩 Подвеска ${listing.item_data.level} ур.`;
+                    if (listing.item_type === 'subwoofer') itemInfo = `🔊 Сабвуфер ${listing.item_data.level} ур.`;
+                    
+                    html += `
+                        <div class="listing-card">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: var(--accent); font-weight: 700;">@${listing.seller_username}</span>
+                                <span style="color: #85bb65; font-weight: 700;">${listing.price}$</span>
+                            </div>
+                            <div style="font-size: 18px; margin-bottom: 8px;">${itemInfo}</div>
+                            <div style="color: var(--text-dim); font-size: 14px; margin-bottom: 12px;">${listing.description || 'Без описания'}</div>
+                            <button onclick="buyItem(${listing.id}, ${listing.price})" class="btn-upgrade" style="width: 100%;">Купить</button>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+                // Загружаем баланс
+                const userResp = await fetch(`/api/user/${tg_id}`);
+                const userData = await userResp.json();
+                document.getElementById('cashBalance').textContent = Math.floor(userData.balance_cash);
+                document.getElementById('tokenBalance').textContent = userData.balance_token.toFixed(2);
+                
+            } catch (error) {
+                console.error('Error loading listings:', error);
+            }
+        }
+        
+        // Покупка товара
+        async function buyItem(listingId, price) {
+            if (!confirm(`Купить за ${price}$?`)) return;
+            
+            try {
+                const response = await fetch(`/api/avito/buy/${tg_id}/${listingId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    alert('Ошибка: ' + result.error);
+                } else {
+                    alert('✅ Товар куплен!');
+                    loadListings();
+                }
+            } catch (error) {
+                alert('Ошибка покупки');
+            }
+        }
+        
+        // Показать форму продажи
+        function showSellForm() {
+            document.getElementById('sellModal').style.display = 'block';
+        }
+        
+        function hideSellForm() {
+            document.getElementById('sellModal').style.display = 'none';
+        }
+        
+        // Создать объявление
+        async function createListing() {
+            const type = document.getElementById('sellType').value;
+            const level = parseInt(document.getElementById('sellLevel').value);
+            const price = parseInt(document.getElementById('sellPrice').value);
+            const desc = document.getElementById('sellDesc').value;
+            
+            if (!level || !price) {
+                alert('Заполните все поля');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/avito/create/${tg_id}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        item_type: type,
+                        item_data: {level: level},
+                        price: price,
+                        description: desc
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ Объявление создано!');
+                    hideSellForm();
+                    loadListings();
+                }
+            } catch (error) {
+                alert('Ошибка создания объявления');
+            }
+        }
+        
+        // Загрузка при старте
+        if (tg_id) {
+            loadListings();
+        }
+    </script>
+</body>
+</html>
