@@ -8,7 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from sqlalchemy import select
 
-from config import BOT_TOKEN, WEBAPP_URL
+from config import BOT_TOKEN
 from database import get_session
 from models import User, Car
 
@@ -17,6 +17,9 @@ logging.basicConfig(level=logging.INFO)
 # Инициализация бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+
+# Жестко прописываем правильный URL (без использования config)
+BASE_URL = "https://gunter-bot-production.up.railway.app"
 
 # ---------- СОСТОЯНИЯ ДЛЯ FSM ----------
 class GarageStates(StatesGroup):
@@ -51,12 +54,10 @@ async def cmd_start(message: Message):
             session.add(car)
             await session.commit()
     
-    # Используем WEBAPP_URL из config.py
-    base_url = WEBAPP_URL  # Теперь это правильный HTTPS URL
-    
+    # Используем прямой URL
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚗 Открыть Гараж", web_app=WebAppInfo(url=f"{base_url}/garage"))],
-        [InlineKeyboardButton(text="💰 Авито (Рынок)", web_app=WebAppInfo(url=f"{base_url}/avito"))],
+        [InlineKeyboardButton(text="🚗 Открыть Гараж", web_app=WebAppInfo(url=f"{BASE_URL}/garage"))],
+        [InlineKeyboardButton(text="💰 Авито (Рынок)", web_app=WebAppInfo(url=f"{BASE_URL}/avito"))],
         [InlineKeyboardButton(text="📊 Мой Профиль", callback_data="profile")],
         [InlineKeyboardButton(text="🎁 Токены GUNTER", callback_data="tokens")]
     ])
