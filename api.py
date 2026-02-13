@@ -1,4 +1,3 @@
-cat > api.py << 'EOF'
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -116,4 +115,3 @@ async def webhook(request: Request):
     except Exception as e:
         print(f"Webhook error: {e}")
         return {"ok": False, "error": str(e)}
-EOF
