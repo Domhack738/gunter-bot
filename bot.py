@@ -51,9 +51,12 @@ async def cmd_start(message: Message):
             session.add(car)
             await session.commit()
     
+    # Используем WEBAPP_URL из config.py
+    base_url = WEBAPP_URL  # Теперь это правильный HTTPS URL
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚗 Открыть Гараж", web_app=WebAppInfo(url=f"{WEBAPP_URL}/garage"))],
-        [InlineKeyboardButton(text="💰 Авито (Рынок)", web_app=WebAppInfo(url=f"{WEBAPP_URL}/avito"))],
+        [InlineKeyboardButton(text="🚗 Открыть Гараж", web_app=WebAppInfo(url=f"{base_url}/garage"))],
+        [InlineKeyboardButton(text="💰 Авито (Рынок)", web_app=WebAppInfo(url=f"{base_url}/avito"))],
         [InlineKeyboardButton(text="📊 Мой Профиль", callback_data="profile")],
         [InlineKeyboardButton(text="🎁 Токены GUNTER", callback_data="tokens")]
     ])
@@ -205,5 +208,3 @@ async def process_donate(callback: CallbackQuery):
             parse_mode="HTML"
         )
         await callback.answer()
-
-# НЕТ ЗАПУСКА POLLING! Бот работает через вебхук в api.py
