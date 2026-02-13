@@ -9,10 +9,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from sqlalchemy import select
 
 from config import BOT_TOKEN, WEBAPP_URL
-from database import init_db, get_session
+from database import get_session
 from models import User, Car
 
 logging.basicConfig(level=logging.INFO)
+
+# Инициализация бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -27,23 +29,20 @@ class GarageStates(StatesGroup):
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     async for session in get_session():
-        # ИСПРАВЛЕНО: Ищем по tg_id, а не по id
         result = await session.execute(
             select(User).where(User.tg_id == message.from_user.id)
         )
         user = result.scalar_one_or_none()
         
         if not user:
-            # Создаем нового пользователя
             user = User(
                 tg_id=message.from_user.id,
                 username=message.from_user.username,
                 first_name=message.from_user.first_name
             )
             session.add(user)
-            await session.flush()  # Чтобы получить ID пользователя
+            await session.flush()
             
-            # Даем стартовую машину
             car = Car(
                 owner_id=user.id,
                 engine_level=1,
@@ -52,7 +51,6 @@ async def cmd_start(message: Message):
             session.add(car)
             await session.commit()
     
-    # Кнопка для открытия мини-аппа
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚗 Открыть Гараж", web_app=WebAppInfo(url=f"{WEBAPP_URL}/garage"))],
         [InlineKeyboardButton(text="💰 Авито (Рынок)", web_app=WebAppInfo(url=f"{WEBAPP_URL}/avito"))],
@@ -73,7 +71,6 @@ async def cmd_start(message: Message):
 @dp.callback_query(lambda c: c.data == "profile")
 async def show_profile(callback: CallbackQuery):
     async for session in get_session():
-        # ИСПРАВЛЕНО: Ищем по tg_id
         result = await session.execute(
             select(User).where(User.tg_id == callback.from_user.id)
         )
@@ -84,7 +81,6 @@ async def show_profile(callback: CallbackQuery):
             await callback.answer()
             return
         
-        # Получаем машину пользователя
         car_result = await session.execute(
             select(Car).where(Car.owner_id == user.id)
         )
@@ -122,7 +118,6 @@ async def show_profile(callback: CallbackQuery):
 @dp.callback_query(lambda c: c.data == "tokens")
 async def show_tokens(callback: CallbackQuery):
     async for session in get_session():
-        # ИСПРАВЛЕНО: Ищем по tg_id
         result = await session.execute(
             select(User).where(User.tg_id == callback.from_user.id)
         )
@@ -181,7 +176,6 @@ async def process_donate(callback: CallbackQuery):
     amount = int(callback.data.split("_")[1])
     
     async for session in get_session():
-        # ИСПРАВЛЕНО: Ищем по tg_id
         result = await session.execute(
             select(User).where(User.tg_id == callback.from_user.id)
         )
@@ -192,7 +186,6 @@ async def process_donate(callback: CallbackQuery):
             await callback.answer()
             return
         
-        # Начисляем токены с бонусом
         token_amount = amount
         if amount == 100:
             token_amount = 100
@@ -213,11 +206,4 @@ async def process_donate(callback: CallbackQuery):
         )
         await callback.answer()
 
-# ---------- ЗАПУСК ----------
-async def main():
-    await init_db()
-    print("🤖 Бот запущен и готов к работе!")
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# НЕТ ЗАПУСКА POLLING! Бот работает через вебхук в api.py
